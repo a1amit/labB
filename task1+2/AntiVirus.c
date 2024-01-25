@@ -91,10 +91,30 @@ void list_free(link *virus_list)
     }
 }
 
+/*part 1c*/
+void detect_virus(char *buffer, unsigned int size, link *virus_list)
+{
+    link *curr = virus_list;
+    while (curr != NULL)
+    {
+        for (unsigned int i = 0; i < size - curr->vir->SigSize; i++)
+        {
+            if (memcmp(buffer + i, curr->vir->sig, curr->vir->SigSize) == 0)
+            {
+                printf("Starting byte location in the file: %u\n", i);
+                printf("Virus name: %s\n", curr->vir->virusName);
+                printf("Size of virus signature: %hu\n\n", curr->vir->SigSize);
+            }
+        }
+        curr = curr->nextVirus;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     link *virus_list = NULL;
     char buffer[256];
+    char filename[256] = "";
     int choice;
 
     while (1)
@@ -109,6 +129,7 @@ int main(int argc, char *argv[])
             printf("Enter the signature file name: ");
             fgets(buffer, sizeof(buffer), stdin);
             buffer[strcspn(buffer, "\n")] = 0;
+            strcpy(filename, buffer); // added this
             FILE *file = fopen(buffer, "r");
             if (file == NULL)
             {
@@ -137,7 +158,7 @@ int main(int argc, char *argv[])
         case 2:
             if (virus_list == NULL)
             {
-                printf("No signatures loaded\n");
+                break;
             }
             else
             {
@@ -145,7 +166,19 @@ int main(int argc, char *argv[])
             }
             break;
         case 3:
-            printf("Not implemented\n");
+            if (virus_list == NULL)
+            {
+                printf("No signatures loaded\n");
+                break;
+            }
+            else
+            {
+                FILE *suspected_file = fopen(filename, "r");
+                char file_buffer[10000];
+                unsigned int size = fread(file_buffer, 1, 10000, suspected_file);
+                detect_virus(file_buffer, size, virus_list);
+                fclose(suspected_file);
+            }
             break;
         case 4:
             printf("Not implemented\n");
