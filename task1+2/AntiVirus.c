@@ -13,126 +13,69 @@ typedef struct virus
 virus *readVirus(FILE *file)
 {
     virus *v = malloc(sizeof(virus));
-
-    if (fread(&v->SigSize, sizeof(unsigned short), 1, file) != 1)
+    if (v == NULL)
     {
+        printf("Failed to allocate memory for virus\n");
+        return NULL;
+    }
+    if (fread(v, 18, 1, file) != 1)
+    {
+        printf("Failed to read virus from file\n");
         free(v);
         return NULL;
     }
-
-    fread(v->virusName, sizeof(char), 16, file);
-    v->sig = malloc(sizeof(unsigned char) * v->SigSize);
-    fread(v->sig, sizeof(unsigned char), v->SigSize, file);
-
+    v->sig = malloc(v->SigSize);
+    if (v->sig == NULL)
+    {
+        printf("Failed to allocate memory for virus signature\n");
+        free(v);
+        return NULL;
+    }
+    if (fread(v->sig, v->SigSize, 1, file) != 1)
+    {
+        printf("Failed to read virus signature from file\n");
+        free(v->sig);
+        free(v);
+        return NULL;
+    }
     return v;
 }
 
 void printVirus(virus *v, FILE *output)
 {
-    fprintf(output, "Virus Name: %s\n", v->virusName);
-    fprintf(output, "Signature Length: %u\n", v->SigSize);
-    fprintf(output, "Signature (Hex): ");
-    for (int i = 0; i < v->SigSize; ++i)
+    fprintf(output, "Virus name: %s\n", v->virusName);
+    fprintf(output, "Virus size: %hu\n", v->SigSize);
+    fprintf(output, "signature:\n");
+    for (int i = 0; i < v->SigSize; i++)
     {
         fprintf(output, "%02X ", v->sig[i]);
     }
-    fprintf(output, "\n");
-}
-
-/*part 1b*/
-typedef struct link
-{
-    struct link *nextVirus;
-    virus *vir;
-} link;
-
-void list_print(link *virus_list, FILE *output)
-{
-    link *current = virus_list;
-    while (current != NULL)
-    {
-        fprintf(output, "Virus Name: %s\n", current->vir->virusName);
-        fprintf(output, "Signature Length: %u\n", current->vir->SigSize);
-        fprintf(output, "Signature (Hex): ");
-        for (int i = 0; i < current->vir->SigSize; ++i)
-        {
-            fprintf(output, "%02X ", current->vir->sig[i]);
-        }
-        fprintf(output, "\n\n");
-        current = current->nextVirus;
-    }
-}
-
-link *list_append(link *virus_list, virus *data)
-{
-    link *newLink = (link *)malloc(sizeof(link));
-    if (newLink == NULL)
-    {
-        perror("Memory allocation error");
-        exit(EXIT_FAILURE);
-    }
-
-    newLink->vir = data;
-    newLink->nextVirus = NULL;
-
-    if (virus_list == NULL)
-    {
-        return newLink;
-    }
-
-    link *current = virus_list;
-    while (current->nextVirus != NULL)
-    {
-        current = current->nextVirus;
-    }
-
-    current->nextVirus = newLink;
-    return virus_list;
-}
-
-void list_free(link *virus_list)
-{
-    link *current = virus_list;
-    while (current != NULL)
-    {
-        link *next = current->nextVirus;
-        free(current->vir->sig);
-        free(current->vir);
-        free(current);
-        current = next;
-    }
+    fprintf(output, "\n \n");
 }
 
 int main(int argc, char **argv)
 {
-    FILE *signaturesFile = fopen("/home/amit/Desktop/LabB/task1+2/signatures-B", "rb");
-    if (signaturesFile == NULL)
+    FILE *file = fopen(argv[1], "r");
+    if (file == NULL)
     {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
+        printf("Could not open file %s\n", argv[1]);
+        return 1;
     }
-
-    char magicNumber[4];
-    fread(magicNumber, sizeof(char), 4, signaturesFile);
-    magicNumber[4] = '\0';
-
-    if (strcmp(magicNumber, "VIRL") != 0 && strcmp(magicNumber, "VIRB") != 0)
+    char magic[5];
+    fread(magic, 4, 1, file);
+    magic[4] = '\0';
+    if (strcmp(magic, "VIRL") != 0 && strcmp(magic, "VIRB") != 0)
     {
-        fprintf(stderr, "Error: Incorrect magic number\n");
-        fclose(signaturesFile);
-        exit(EXIT_FAILURE);
+        printf("Invalid file format\n");
+        return 1;
     }
-
-    fseek(signaturesFile, 0, SEEK_SET); // Reset file position
-
     virus *v;
-    while ((v = readVirus(signaturesFile)) != NULL)
+    while ((v = readVirus(file)) != NULL)
     {
-        printVirus(v, stdout); // Print to standard output
+        printVirus(v, stdout);
         free(v->sig);
         free(v);
     }
-
-    fclose(signaturesFile);
+    fclose(file);
     return 0;
 }
