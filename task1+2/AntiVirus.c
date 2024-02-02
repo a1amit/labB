@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <byteswap.h>
+
+int isBigEndian = 0;
 
 typedef struct virus
 {
@@ -16,6 +19,18 @@ typedef struct link
 } link;
 
 /*part 1a*/
+
+void checkEndian(FILE *file)
+{
+    char magic[5];
+    fread(magic, 1, 4, file);
+    magic[4] = '\0';
+    if (strcmp(magic, "VIRB") == 0)
+    {
+        isBigEndian = 1;
+    }
+}
+
 virus *readVirus(FILE *file)
 {
     virus *v = malloc(sizeof(virus));
@@ -23,6 +38,10 @@ virus *readVirus(FILE *file)
     {
         free(v);
         return NULL;
+    }
+    if (isBigEndian)
+    {
+        v->SigSize = bswap_16(v->SigSize); // Convert from big-endian to little-endian
     }
     v->sig = malloc(v->SigSize);
     if (fread(v->sig, v->SigSize, 1, file) != 1)
@@ -148,6 +167,8 @@ int main(int argc, char *argv[])
                 printf("Invalid file format\n");
                 break;
             }
+            // Check the endianness of the file
+            isBigEndian = (strcmp(magic, "VIRB") == 0);
             virus *v;
             while ((v = readVirus(file)) != NULL)
             {
@@ -155,6 +176,7 @@ int main(int argc, char *argv[])
             }
             fclose(file);
             break;
+
         case 2:
             if (virus_list == NULL)
             {
