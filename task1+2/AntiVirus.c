@@ -120,7 +120,7 @@ void detect_virus(char *buffer, unsigned int size, link *virus_list)
         {
             if (memcmp(buffer + i, curr->vir->sig, curr->vir->SigSize) == 0)
             {
-                printf("Starting byte location in the file: %u\n", i);
+                printf("Starting byte location in the file: %u in hex:%x\n", i, i); //added where in hexa the virus is at
                 printf("Virus name: %s\n", curr->vir->virusName);
                 printf("Size of virus signature: %hu\n\n", curr->vir->SigSize);
             }
@@ -134,6 +134,9 @@ int main(int argc, char *argv[])
     link *virus_list = NULL;
     char buffer[256];
     char filename[256] = "";
+    char* suspectedFileName = NULL; //suspected file should be command line argument
+    if(argc > 1)
+        suspectedFileName = argv[1];
     int choice;
 
     while (1)
@@ -192,10 +195,13 @@ int main(int argc, char *argv[])
             {
                 printf("No signatures loaded\n");
                 break;
+            } else if(!suspectedFileName) {
+                printf("No suspected file!\n");
+                break;
             }
             else
             {
-                FILE *suspected_file = fopen(filename, "r");
+                FILE *suspected_file = fopen(suspectedFileName, "r"); //fixed suspected file to be the command line argument
                 char file_buffer[10000];
                 unsigned int size = fread(file_buffer, 1, 10000, suspected_file);
                 detect_virus(file_buffer, size, virus_list);
