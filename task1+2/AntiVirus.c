@@ -132,7 +132,7 @@ void detect_virus(char *buffer, unsigned int size, link *virus_list)
 /* 2b */
 void neutralize_virus(char *fileName, int signatureOffset)
 {
-    
+
 }
 
 
@@ -157,7 +157,8 @@ void nuetralize_virus_helper(char *fileName, link *virus_list){
     }
 
     FILE* file = fopen(fileName, "w+");
-    fwrite(buffer, 1, 10000, file);
+
+    fwrite(buffer, 1, size, file);
     fclose(file);
 }
 
