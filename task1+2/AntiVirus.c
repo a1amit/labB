@@ -129,6 +129,40 @@ void detect_virus(char *buffer, unsigned int size, link *virus_list)
     }
 }
 
+/* 2b */
+void neutralize_virus(char *fileName, int signatureOffset)
+{
+    
+}
+
+
+void nuetralize_virus_helper(char *fileName, link *virus_list){
+    FILE *suspected_file = fopen(fileName, "r"); //fixed suspected file to be the command line argument
+    char buffer[10000];
+    unsigned int size = fread(buffer, 1, 10000, suspected_file);
+    fclose(suspected_file);
+
+    link *curr = virus_list;
+    while (curr != NULL)
+    {
+        for (unsigned int i = 0; i < size - curr->vir->SigSize; i++)
+        {
+            if (memcmp(buffer + i, curr->vir->sig, curr->vir->SigSize) == 0)
+            {
+                // neutralize_virus(fileName, i);
+                buffer[i] = '\xC3';
+            }
+        }
+        curr = curr->nextVirus;
+    }
+
+    FILE* file = fopen(fileName, "w+");
+    fwrite(buffer, 1, 10000, file);
+    fclose(file);
+}
+
+
+
 int main(int argc, char *argv[])
 {
     link *virus_list = NULL;
@@ -209,7 +243,7 @@ int main(int argc, char *argv[])
             }
             break;
         case 4:
-            printf("Not implemented\n");
+            nuetralize_virus_helper(suspectedFileName, virus_list);
             break;
         case 5:
             list_free(virus_list);
